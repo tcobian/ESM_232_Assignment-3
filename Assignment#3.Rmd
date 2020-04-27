@@ -1,0 +1,215 @@
+---
+title: "Assignment#3"
+author: "Tyler Cobian"
+date: "4/24/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load in the packages needed
+```{r, include=FALSE}
+library(tidyverse)
+library(sensitivity)
+library(gridExtra)
+library(pse)
+
+```
+Adjust your almond model to  output ONLY the mean almond yield anomoly IF the users sets parameter (e.g mean_only = TRUE))
+
+```{r}
+# import the climate data
+clim <- read.table("clim.txt",  sep=" ", header=T)
+
+almond_yield <- function(mean_only, 
+                      clim_data = clim,
+                       a=-0.015,
+                       b=-0.0046,
+                       c=-0.07,
+                       d=0.0043,
+                       e=0.28) {
+  
+  # Add in some error checking into the function
+  
+  # Make sure the climate data input is a dataframe
+  if(class(clim_data) != "data.frame") return("Climate data input must be a data frame")
+  
+   # Make sure the climate data input contains the columns year, month, precip, tmin_c and tmax_c
+  if(!all(has_name(clim_data, c("month", "year",  "month", "precip", "tmin_c", "tmax_c")))) return("Climate data input must contain the following columns: year, month, precip, tmin_c and tmax_c")
+  
+  # Make sure that the input for precipitation is larger than 0
+  clim_data$precip = ifelse(clim_data$precip < 0, return("Input for precipitation must be a value larger than 0"), clim_data$precip)
+  
+  # Make sure that the maximum tempertaure will be larger than the minimum temperature
+  clim_data$tmin_c = ifelse(clim_data$tmin_c > clim_data$tmax_c, return("Input for maximum temperature must be larger than input for minimum temperature"), clim_data$tmin_c)
+  
+  # Average monthly maximum daily temperature, and monthly precipitation from a data frame called clim  with columns year, month, precip and tmax_c
+
+clim_month <-  clim_data %>%
+group_by(month, year) %>%
+summarize(meantmin = mean(tmin_c),
+          meantmax = mean(tmax_c),
+          precip=sum(precip))
+  
+   # Filter Jan and Feb data
+  jan <- clim_month %>% 
+    filter(month==1)
+  
+  feb <- clim_month %>% 
+    filter(month==2)
+  
+  # Change column names
+  colnames(jan) <- c("month", "year", "Tn", "Tm", "P")
+  colnames(feb) <- c("month", "year", "Tn", "Tm", "P")
+  
+  # Data structure for yield annomalies
+  yield_df <- data.frame(year = jan$year, YA = NA)
+  
+  # Loop through each year
+  for (i in 1:length(yield_df$year)) {
+   yield_df$YA[i] = a*feb$Tn[i] + b*(feb$Tn[i]^2) +c*jan$P[i] + d*(jan$P[i]^2) + e
+}
+  
+  # Calculate max and min yields
+  max_yield <- yield_df %>% 
+    arrange(-abs(YA)) %>% 
+    head(1)
+  
+  min_yield <- yield_df %>% 
+    arrange(abs(YA)) %>% 
+    head(1)
+  
+  mean_YA<- mean(yield_df$YA)
+  
+  # Change column names of max and min yields
+  colnames(max_yield) <- c("Year", "Maximum Yield Anomaly")
+  colnames(min_yield) <- c("Year", "Minimum Yield Anomaly")
+  
+  # Create list with three elements
+  yield_list <- list(yield_df, max_yield, min_yield)
+  
+ if(mean_only)
+    return(mean(yield_df$YA))
+ else
+    return(yield_list)
+
+}
+  
+almond_yield(mean_only = T)
+
+```
+Sobol Sensativity of all the parameters
+
+```{r}
+# Sobel method for sensativity
+
+# Set the number of patameter sets
+np = 100
+
+# Create distributions for the different paramenters
+
+a_dist_1<- rnorm(mean = 0.015, sd = 0.20, n = np)
+b_dist_1<- rnorm(mean = 0.0046, sd = 0.20, n = np)
+c_dist_1<- rnorm(mean = 0.07, sd = 0.20, n = np)
+d_dist_1<- rnorm(mean = 0.0043, sd = 0.20, n = np)
+e_dist_1<- rnorm(mean = 0.28, sd = 0.20, n = np) 
+
+
+a_dist_2<- rnorm(mean = 0.015, sd = 0.20, n = np)
+b_dist_2<- rnorm(mean = 0.0046, sd = 0.20, n = np)
+c_dist_2<- rnorm(mean = 0.07, sd = 0.20, n = np)
+d_dist_2<- rnorm(mean = 0.0043, sd = 0.20, n = np)
+e_dist_2<- rnorm(mean = 0.28, sd = 0.20, n = np) 
+# make a data set with these new parameters 
+
+sens_1<- cbind.data.frame(a = a_dist_1, b = b_dist_1, c = c_dist_1, d = d_dist_1, e = e_dist_1)
+
+sens_2<- cbind.data.frame(a = a_dist_2, b = b_dist_2, c = c_dist_2, d = d_dist_2, e = e_dist_2)
+
+sen_yield<- sobol2007(model = NULL, sens_1, sens_2, nboot = 100)
+
+# Run the model through the new parameters
+run_1<- mapply(almond_yield,
+               a = sen_yield$X$a,
+               b = sen_yield$X$b,
+               c = sen_yield$X$c,
+               d = sen_yield$X$d,
+               e = sen_yield$X$e,
+               mean_only = T)
+
+# give results to sensativity analysis
+sen_yield<- tell(sen_yield, run_1)
+
+# First order indicies (main effect without any co-variance)
+sen_yield$S
+# Total sensativity index
+sen_yield$T
+
+# Vizualize the results
+print(sen_yield)
+plot(sen_yield)
+
+
+```
+Rank the parameters in term of their sensitivity
+Graph uncertainty in mean yield anomaly across all parameter uncertainty (boxplot and cummulative distribution of the output).
+
+```{r}
+
+```
+Repeat using the LHS and Sobel methods
+
+```{r}
+
+```
+Repeat using twice as many parameter sets as you did in your first sensitivity analysis - and look at how this changes the sensitivity results
+
+```{r}
+
+```
+Submit R markdown and short write up describing what you learned from the sensitivity analysis
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -15,6 +15,7 @@ library(tidyverse)
 library(sensitivity)
 library(gridExtra)
 library(deSolve)
+library(pse)
 
 ```
 Adjust your almond model to  output ONLY the mean almond yield anomoly IF the users sets parameter (e.g mean_only = TRUE))

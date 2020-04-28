@@ -24,8 +24,8 @@ Adjust your almond model to  output ONLY the mean almond yield anomoly IF the us
 # import the climate data
 clim <- read.table("clim.txt",  sep=" ", header=T)
 
-almond_yield <- function(mean_only, 
-                      clim_data = clim,
+almond_yield <- function(mean_only,
+                         clim_data = clim,
                        a=-0.015,
                        b=-0.0046,
                        c=-0.07,
@@ -50,7 +50,7 @@ almond_yield <- function(mean_only,
 
 clim_month <-  clim_data %>%
 group_by(month, year) %>%
-summarize(meantmin = mean(tmin_c),
+dplyr::summarize(meantmin = mean(tmin_c),
           meantmax = mean(tmax_c),
           precip=sum(precip))
   
@@ -101,7 +101,68 @@ summarize(meantmin = mean(tmin_c),
 almond_yield(mean_only = T)
 
 ```
-Sobol Sensativity of all the parameters
+LHS Sensativity of all the parameters
+
+```{r}
+# Set up the parameters to test
+factors = c("a", "b", "c", "d", "e")
+
+# Set the number of parmeter sets to run
+nsets = 100
+
+# make the distribution of th parameters
+q = c("qnorm","qnorm","qnorm","qnorm","qnorm")
+
+q.arg = list(list(mean = 0.015, sd = 0.20), list(mean = 0.0046, sd = 0.20), list(mean = 0.07, sd = 0.2), list(mean = 0.0043, sd = 0.20), list(mean = 0.28, sd = 0.20))
+
+# Generate samples from LHS
+sen_yield_LHS<- LHS(NULL, factors, nsets, q, q.arg)
+sen_yield_LHS_pars<- get.data(sen_yield_LHS)
+head(sen_yiels_LHS_pars)
+
+# Create a data structure to store the resulst of running these parameter values
+LHS_sen_results<- matrix(nrow = nsets, ncol = 1)
+
+# Use a for loop to run these new parameter values through the alomd_yield function
+for(i in 1:nsets){
+  LHS_sen_results[i,] = unlist(almond_yield(clim_data = clim, mean_only = T,
+                                            a = sen_yield_LHS_pars[i,1],
+                                            b = sen_yield_LHS_pars[i,2],
+                                            c = sen_yield_LHS_pars[i,3],
+                                            d = sen_yield_LHS_pars[i,4],
+                                            e = sen_yield_LHS_pars[i,5]))
+}
+
+# Clean up the results data frame
+colnames(LHS_sen_results)<- "avg_yield"
+
+LHS_sen_results = as.data.frame(LHS_sen_results)
+
+# look at the senativity of each parameter
+sen_yield_LHS<- pse::tell(sen_yield_LHS, t(LHS_sen_results))
+sen_yield_LHS
+
+```
+Rank the parameters in term of their sensitivity
+Graph uncertainty in mean yield anomaly across all parameter uncertainty (boxplot and cummulative distribution of the output).
+
+### Sensativity of Parameters in order or most sensative
+#### 1. D
+#### 2. C
+#### 3. B
+#### 4. A
+#### 5. E
+
+```{r}
+# Make a boxplot of the LHS results
+LHS_plot<- ggplot(data = LHS_sen_results, aes(y = avg_yield, colour = avg_yield))+
+  geom_boxplot()+
+  labs(y = "Avgerage Yearly Yield", title = "Sensativity of Yearly Yields on Model Parameters")+
+  theme_minimal()+
+  theme(axis.title.y = element_blank())
+LHS_plot
+```
+Repeat using Sobol method
 
 ```{r}
 # Sobel method for sensativity
@@ -140,41 +201,76 @@ run_1<- mapply(almond_yield,
                e = sen_yield$X$e,
                mean_only = T)
 
+# make a data frame of run_1
+run_1_data<- as.data.frame(run_1)
+
 # give results to sensativity analysis
-sen_yield<- tell(sen_yield, run_1)
+sen_yield<- sensitivity::tell(sen_yield, run_1)
 
 # First order indicies (main effect without any co-variance)
 sen_yield$S
 # Total sensativity index
 sen_yield$T
 
+# Make a data frame of the total senastivites
+sobol_sensitivity<- data.frame("parameter" = c("a", "b", "c", "d", "e"),
+                               "original" = sen_yield$T$original,
+                               "bias" = sen_yield$T$bias,
+                               "std_err" = sen_yield$T$`std. error`,
+                               "min_ci" = sen_yield$T$`min. c.i.`,
+                               "max_ci" = sen_yield$T$`max. c.i.`)
+
 # Vizualize the results
 print(sen_yield)
 plot(sen_yield)
-
-
-```
-Rank the parameters in term of their sensitivity
-Graph uncertainty in mean yield anomaly across all parameter uncertainty (boxplot and cummulative distribution of the output).
-
-```{r}
-
-```
-Repeat using the LHS and Sobel methods
-
-```{r}
 
 ```
 Repeat using twice as many parameter sets as you did in your first sensitivity analysis - and look at how this changes the sensitivity results
 
 ```{r}
+# repeat the LHS sensativity but with 500 runs
+# Set up the parameters to test
+factors = c("a", "b", "c", "d", "e")
+
+# Set the number of parmeter sets to run
+nsets = 500
+
+# make the distribution of th parameters
+q = c("qnorm","qnorm","qnorm","qnorm","qnorm")
+
+q.arg = list(list(mean = 0.015, sd = 0.20), list(mean = 0.0046, sd = 0.20), list(mean = 0.07, sd = 0.2), list(mean = 0.0043, sd = 0.20), list(mean = 0.28, sd = 0.20))
+
+# Generate samples from LHS
+sen_yield_LHS<- LHS(NULL, factors, nsets, q, q.arg)
+sen_yield_LHS_pars<- get.data(sen_yield_LHS)
+head(sen_yiels_LHS_pars)
+
+# Create a data structure to store the resulst of running these parameter values
+LHS_sen_results<- matrix(nrow = nsets, ncol = 1)
+
+# Use a for loop to run these new parameter values through the alomd_yield function
+for(i in 1:nsets){
+  LHS_sen_results[i,] = unlist(almond_yield(clim_data = clim, mean_only = T,
+                                            a = sen_yield_LHS_pars[i,1],
+                                            b = sen_yield_LHS_pars[i,2],
+                                            c = sen_yield_LHS_pars[i,3],
+                                            d = sen_yield_LHS_pars[i,4],
+                                            e = sen_yield_LHS_pars[i,5]))
+}
+
+# Clean up the results data frame
+colnames(LHS_sen_results)<- "avg_yield"
+
+LHS_sen_results = as.data.frame(LHS_sen_results)
+
+sen_yield_LHS<- pse::tell(sen_yield_LHS, t(LHS_sen_results))
+sen_yield_LHS
 
 ```
 Submit R markdown and short write up describing what you learned from the sensitivity analysis
 
-```{r}
+The results of the sensativity analysis concluded that the "D" parameter of the almond yield function was most sensative followed by "C", "B", "A", "E". 
 
-```
 
 
 

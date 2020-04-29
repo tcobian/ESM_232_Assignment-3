@@ -113,12 +113,12 @@ nsets = 100
 # make the distribution of th parameters
 q = c("qnorm","qnorm","qnorm","qnorm","qnorm")
 
-q.arg = list(list(mean = 0.015, sd = 0.20), list(mean = 0.0046, sd = 0.20), list(mean = 0.07, sd = 0.2), list(mean = 0.0043, sd = 0.20), list(mean = 0.28, sd = 0.20))
+q.arg = list(list(mean = 0.015, sd = 0.015*0.20), list(mean = 0.0046, sd = 0.0046*0.20), list(mean = 0.07, sd = 0.07*0.2), list(mean = 0.0043, sd = 0.0043*0.20), list(mean = 0.28, sd = 0.28*0.20))
 
 # Generate samples from LHS
 sen_yield_LHS<- LHS(NULL, factors, nsets, q, q.arg)
 sen_yield_LHS_pars<- get.data(sen_yield_LHS)
-head(sen_yiels_LHS_pars)
+head(sen_yield_LHS_pars)
 
 # Create a data structure to store the resulst of running these parameter values
 LHS_sen_results<- matrix(nrow = nsets, ncol = 1)
@@ -146,7 +146,7 @@ sen_yield_LHS
 Rank the parameters in term of their sensitivity
 Graph uncertainty in mean yield anomaly across all parameter uncertainty (boxplot and cummulative distribution of the output).
 
-### Sensativity of Parameters in order or most sensative
+### Sensativity of Parameters in order of most sensative
 #### 1. D
 #### 2. C
 #### 3. B
@@ -162,7 +162,7 @@ LHS_plot<- ggplot(data = LHS_sen_results, aes(y = avg_yield, colour = avg_yield)
   theme(axis.title.y = element_blank())
 LHS_plot
 ```
-Repeat using Sobol method
+Repeat using Sobel method
 
 ```{r}
 # Sobel method for sensativity
@@ -172,18 +172,18 @@ np = 100
 
 # Create distributions for the different paramenters
 
-a_dist_1<- rnorm(mean = 0.015, sd = 0.20, n = np)
-b_dist_1<- rnorm(mean = 0.0046, sd = 0.20, n = np)
-c_dist_1<- rnorm(mean = 0.07, sd = 0.20, n = np)
-d_dist_1<- rnorm(mean = 0.0043, sd = 0.20, n = np)
-e_dist_1<- rnorm(mean = 0.28, sd = 0.20, n = np) 
+a_dist_1<- rnorm(mean = 0.015, sd = 0.015*0.20, n = np)
+b_dist_1<- rnorm(mean = 0.0046, sd = 0.0046*0.20, n = np)
+c_dist_1<- rnorm(mean = 0.07, sd = 0.07*0.20, n = np)
+d_dist_1<- rnorm(mean = 0.0043, sd = 0.0043*0.20, n = np)
+e_dist_1<- rnorm(mean = 0.28, sd = 0.28*0.20, n = np) 
 
 
-a_dist_2<- rnorm(mean = 0.015, sd = 0.20, n = np)
-b_dist_2<- rnorm(mean = 0.0046, sd = 0.20, n = np)
-c_dist_2<- rnorm(mean = 0.07, sd = 0.20, n = np)
-d_dist_2<- rnorm(mean = 0.0043, sd = 0.20, n = np)
-e_dist_2<- rnorm(mean = 0.28, sd = 0.20, n = np) 
+a_dist_2<- rnorm(mean = 0.015, sd = 0.015*0.20, n = np)
+b_dist_2<- rnorm(mean = 0.0046, sd = 0.0046*0.20, n = np)
+c_dist_2<- rnorm(mean = 0.07, sd = 0.07*0.20, n = np)
+d_dist_2<- rnorm(mean = 0.0043, sd = 0.0043*0.20, n = np)
+e_dist_2<- rnorm(mean = 0.28, sd = 0.28*0.20, n = np) 
 # make a data set with these new parameters 
 
 sens_1<- cbind.data.frame(a = a_dist_1, b = b_dist_1, c = c_dist_1, d = d_dist_1, e = e_dist_1)

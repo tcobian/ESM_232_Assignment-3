@@ -277,7 +277,7 @@ sen_yield_LHS
 ```
 Submit R markdown and short write up describing what you learned from the sensitivity analysis
 
-The results of the sensativity analysis concluded that the "D" parameter of the almond yield function was most sensative followed by "C", "B", "A", "E". 
+The results of the sensativity analysis concluded that the "D" parameter of the almond yield function was most sensative followed by "C", "B", "A", "E". When the number of runs was increased the sensitivity values changed but the order of most sensative parameters did not. The yeilds results were spread across values of 100 and 300 with a mean value of 200 and a standard deviation of 38. 
 
 
 

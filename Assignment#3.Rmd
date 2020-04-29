@@ -161,6 +161,14 @@ LHS_plot<- ggplot(data = LHS_sen_results, aes(y = avg_yield, colour = avg_yield)
   theme_minimal()+
   theme(axis.title.y = element_blank())
 LHS_plot
+
+
+# Make a distribution of all the outputs
+LHS_dist<- ggplot(data = LHS_sen_results, aes(x = avg_yield))+
+  geom_histogram(color = "black", fill = "cyan4")+
+  labs(x = "Averge Yield", y = "Count", title = "Distribution of Results from LHS Sensativity Test")+
+  theme_minimal()
+LHS_dist
 ```
 Repeat using Sobel method
 

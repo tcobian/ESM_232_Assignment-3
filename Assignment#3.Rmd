@@ -142,6 +142,7 @@ LHS_sen_results = as.data.frame(LHS_sen_results)
 sen_yield_LHS<- pse::tell(sen_yield_LHS, t(LHS_sen_results))
 sen_yield_LHS
 
+plotecdf(sen_yield_LHS, col="red", lwd=5, xlab="Average Yield")
 ```
 Rank the parameters in term of their sensitivity
 Graph uncertainty in mean yield anomaly across all parameter uncertainty (boxplot and cummulative distribution of the output).
@@ -169,6 +170,9 @@ LHS_dist<- ggplot(data = LHS_sen_results, aes(x = avg_yield))+
   labs(x = "Averge Yield", y = "Count", title = "Distribution of Results from LHS Sensativity Test")+
   theme_minimal()
 LHS_dist
+
+# CDF of output from all parameter uncertainty 
+plotecdf(sen_yield_LHS, col="red", lwd=5, xlab="Average Yield")
 ```
 Repeat using Sobel method
 
@@ -251,7 +255,7 @@ q.arg = list(list(mean = 0.015, sd = 0.20), list(mean = 0.0046, sd = 0.20), list
 # Generate samples from LHS
 sen_yield_LHS<- LHS(NULL, factors, nsets, q, q.arg)
 sen_yield_LHS_pars<- get.data(sen_yield_LHS)
-head(sen_yiels_LHS_pars)
+head(sen_yield_LHS_pars)
 
 # Create a data structure to store the resulst of running these parameter values
 LHS_sen_results<- matrix(nrow = nsets, ncol = 1)
